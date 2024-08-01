@@ -53,7 +53,47 @@ module sas::sas {
         url: Url,
     }
 
+
+    /// ========= Public-View Funtions =========
+    
+    public fun schema(self: &Attesttation): address {
+        self.schema
+    }
+
+    public fun ref_schema(self: &Attesttation): address {
+        self.ref_schema
+    }
+
+    public fun attester(self: &Attesttation): address {
+        self.attester
+    }
+
+    public fun time(self: &Attesttation): u64 {
+        self.time
+    }
+
+    public fun expireation_time(self: &Attesttation): u64 {
+        self.expireation_time
+    }
+
+    public fun data(self: &Attesttation): vector<u8> {
+        self.data
+    }
+
+    public fun name(self: &Attesttation): string::String {
+        self.name
+    }
+
+    public fun description(self: &Attesttation): string::String {
+        self.description
+    }
+
+    public fun url(self: &Attesttation): Url {
+        self.url
+    }
+
     /// ========= Public Functions =========
+    
     public fun attest(
         schema_record: &SchemaRecord,
         ref_schema: &SchemaRecord,

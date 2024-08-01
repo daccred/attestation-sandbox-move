@@ -17,8 +17,6 @@ module sas::schema_record {
     /// ======== Constants ========
 
     const START_ATTEST: vector<u8> = b"START_ATTEST";
-    // const FINISH_ATTEST: vector<u8> = b"FINISH_ATTEST";
-
 
     /// ======== Structs ========
 
@@ -58,14 +56,6 @@ module sas::schema_record {
 
         self.confirm(request);
     }
-
-    // public fun finish(self: &SchemaRecord, request: Request) {
-    //     assert!(
-    //         request.name.index_of(&b"F".to_string()) == 0,
-    //         EMustBeFinishRequest
-    //     );
-    //     confirm(self, request);
-    // }
 
     /// ======== Public-View Funtions ========
 
