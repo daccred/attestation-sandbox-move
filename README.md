@@ -7,3 +7,4 @@ Sui Attestation Service Contracts
 |----|----|
 | Revocable Attestation | ❎ |
 | Schema Registry | ❎ | 
+| Payment Sui | ❎ |
