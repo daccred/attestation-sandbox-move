@@ -141,6 +141,8 @@ module sas::sas {
             url: url::new_unsafe_from_bytes(url)
         };
 
+        attestation_registry.registry(object::id_address(&attestation));
+
         emit(
             Attest {
                 id: object::id_address(&attestation),

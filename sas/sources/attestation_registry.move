@@ -37,11 +37,11 @@ module sas::attestation_registry {
     /// ========== Public-Mutating Functions ==========
     
     public fun registry(
-        attestation: address,
-        registry: &mut AttestationRegistry
+        self: &mut AttestationRegistry,
+        attestation: address
     ) {
-        assert!(!registry.is_exist(attestation), EAttestationNotFound);
-        registry.attestations.insert(attestation, Status {
+        assert!(!self.is_exist(attestation), EAttestationNotFound);
+        self.attestations.insert(attestation, Status {
             is_revoked: false,
             timestamp: 0,
         });
