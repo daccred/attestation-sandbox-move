@@ -38,8 +38,9 @@ module sas::blocklist_tests {
 
             sas::attest_with_resolver(
                 &schema_record,
-                &schema_record,
+                @0x0,
                 bob,
+                false,
                 0,
                 data,
                 name,

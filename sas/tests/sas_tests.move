@@ -31,8 +31,9 @@ module sas::sas_tests {
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest(
                 &schema_record,
-                &schema_record,
+                @0x0,
                 user,
+                false,
                 0,
                 data,
                 name,
@@ -84,8 +85,9 @@ module sas::sas_tests {
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest_with_resolver(
                 &schema_record,
-                &schema_record,
+                @0x0,
                 user,
+                false,
                 0,
                 data,
                 name,

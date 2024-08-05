@@ -16,8 +16,9 @@ module sas::sas {
     public struct Attest has copy, drop {
         id: address,
         schema: address,
-        ref_schema: address,
+        ref_id: address,
         attester: address,
+        revokable: bool,
         time: u64,
         expireation_time: u64,
         data: vector<u8>,
@@ -29,8 +30,9 @@ module sas::sas {
     public struct AttestWithResolver has copy, drop {
         id: address,
         schema: address,
-        ref_schema: address,
+        ref_id: address,
         attester: address,
+        revokable: bool,    
         time: u64,
         expireation_time: u64,
         data: vector<u8>,
@@ -43,9 +45,10 @@ module sas::sas {
     public struct Attesttation has key {
         id: UID,
         schema: address,
-        ref_schema: address,
+        ref_id: address,
         attester: address,
         time: u64,
+        revokable: bool,
         expireation_time: u64,
         data: vector<u8>,
         name: string::String,
@@ -60,8 +63,8 @@ module sas::sas {
         self.schema
     }
 
-    public fun ref_schema(self: &Attesttation): address {
-        self.ref_schema
+    public fun ref_id(self: &Attesttation): address {
+        self.ref_id
     }
 
     public fun attester(self: &Attesttation): address {
@@ -70,6 +73,10 @@ module sas::sas {
 
     public fun time(self: &Attesttation): u64 {
         self.time
+    }
+
+    public fun revokable(self: &Attesttation): bool {
+        self.revokable
     }
 
     public fun expireation_time(self: &Attesttation): u64 {
@@ -96,8 +103,9 @@ module sas::sas {
     
     public fun attest(
         schema_record: &SchemaRecord,
-        ref_schema: &SchemaRecord,
+        ref_id: address,
         recipient: address,
+        revokeable: bool,
         expireation_time: u64,
         data: vector<u8>,
         name: vector<u8>,
@@ -117,7 +125,8 @@ module sas::sas {
             schema: object::id_address(schema_record),
             time: clock::timestamp_ms(time),
             expireation_time: expireation_time,
-            ref_schema: object::id_address(ref_schema),
+            revokable: revokeable,
+            ref_id: ref_id,
             attester: attester,
             data: data,
             name: string::utf8(name),
@@ -129,8 +138,9 @@ module sas::sas {
             Attest {
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
-                ref_schema: attestation.ref_schema,
+                ref_id: attestation.ref_id,
                 attester: attestation.attester,
+                revokable: attestation.revokable,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
                 data: attestation.data,
@@ -145,8 +155,9 @@ module sas::sas {
 
     public fun attest_with_resolver(
         schema_record: &SchemaRecord,
-        ref_schema: &SchemaRecord,
+        ref_id: address,
         recipient: address,
+        revokable: bool,
         expireation_time: u64,
         data: vector<u8>,
         name: vector<u8>,
@@ -169,8 +180,9 @@ module sas::sas {
             schema: object::id_address(schema_record),
             time: clock::timestamp_ms(time),
             expireation_time: expireation_time,
-            ref_schema: object::id_address(ref_schema),
+            ref_id: ref_id,
             attester: attester,
+            revokable: revokable,
             data: data,
             name: string::utf8(name),
             description: string::utf8(description),
@@ -181,8 +193,9 @@ module sas::sas {
             AttestWithResolver {
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
-                ref_schema: attestation.ref_schema,
+                ref_id: attestation.ref_id,
                 attester: attestation.attester,
+                revokable: attestation.revokable,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
                 data: attestation.data,
