@@ -1,4 +1,4 @@
-module sas::schema_record {
+module sas::schema {
     use std::string::String;
     use sui::{
     bag::{Self, Bag},
@@ -6,6 +6,8 @@ module sas::schema_record {
     vec_set::{Self, VecSet}
     };
     use std::type_name::{Self, TypeName};
+
+    use sas::schema_registry::{SchemaRegistry};
 
     /// ======== Errors ========
     
@@ -107,19 +109,28 @@ module sas::schema_record {
 
     /// ======== Public Functions ========
 
-    public fun new(schema: vector<u8> , ctx: &mut TxContext): SchemaRecord {
-        SchemaRecord {
+    public fun new(
+        schema_registry: &mut SchemaRegistry, 
+        schema: vector<u8> , 
+        ctx: &mut TxContext
+        ): SchemaRecord {
+        let schema_record = SchemaRecord {
             id: object::new(ctx),
             schema: schema,
             resolver: option::none()
-        }
+        };
+
+        schema_registry.registry(object::id_address(&schema_record), ctx);
+
+        schema_record
     }
 
     public fun new_with_resolver(
+        schema_registry: &mut SchemaRegistry,
         schema: vector<u8>,
         ctx: &mut TxContext,
     ): (SchemaRecord, ResolverBuilder) {
-        let self = new(schema, ctx);
+        let self = new(schema_registry, schema, ctx);
         let schema_address = object::id_address(&self);
         let resolver_builder = new_resolver_builder(schema_address, ctx);
         (

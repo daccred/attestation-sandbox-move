@@ -6,7 +6,7 @@ module sas::whitelist {
     use fun string::utf8 as vector.utf8;
 
     use sas::admin::{Self, Admin};
-    use sas::schema_record::{Self, SchemaRecord, ResolverBuilder, Request};
+    use sas::schema::{Self, SchemaRecord, ResolverBuilder, Request};
 
 
     /// ========= Errors =========
@@ -27,7 +27,7 @@ module sas::whitelist {
     public fun add(schema_record: &SchemaRecord, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext): Admin {
         assert!(schema_record.addy() == resolver_builder.schema_address_from_builder(), EInvalideSchemaAddress);
 
-        resolver_builder.add_rule(schema_record::start_attest_name().utf8(), WhitelistResolver {});
+        resolver_builder.add_rule(schema::start_attest_name().utf8(), WhitelistResolver {});
         resolver_builder.add_rule_config(WhitelistResolver {}, Whitelist { inner: table::new(ctx) });
 
         admin::new(resolver_builder.schema_address_from_builder(), ctx)

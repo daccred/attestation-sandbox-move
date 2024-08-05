@@ -2,11 +2,11 @@ module sas::schema_registry {
     use sui::{
     vec_map::{Self, VecMap},
     };
-    use sas::schema_record::{SchemaRecord};
 
     /// ======== Errors ========
 
     const ESchemaNotFound: u64 = 0;
+    const ESchmaAlreadyExist: u64 = 1;
 
     /// ======== OTW ========
     
@@ -14,14 +14,9 @@ module sas::schema_registry {
 
     /// ======== Structs ========
 
-    public struct Status has copy, store {
-        is_revoked: bool,
-        timestamp: u64,
-    }
-
     public struct SchemaRegistry has key, store {
         id: UID,
-        schema_records: VecMap<address, Status>,
+        schema_records: VecMap<address, address>, // SchemaRecord -> Creattor
     }
 
 
@@ -39,17 +34,22 @@ module sas::schema_registry {
     /// ========== Public-Mutating Functions ==========
     
     public fun registry(
-        schema_record: &SchemaRecord,
-        registry: &mut SchemaRegistry,
-        _ctx: &mut TxContext
+        self: &mut SchemaRegistry,
+        schema_record: address,
+        ctx: &mut TxContext
     ) {
-        registry.schema_records.insert(object::id_address(schema_record), Status {
-            is_revoked: false,
-            timestamp: 0,
-        });
+        assert!(!self.is_exist(schema_record), ESchmaAlreadyExist);
+        self.schema_records.insert(schema_record, ctx.sender());
     }
 
     /// ========== Public-View Functions ==========
+    
+    public fun is_exist(
+        self: &SchemaRegistry,
+        schema_record: address
+    ): bool {
+        self.schema_records.contains(&schema_record)
+    }
     
     public fun schema_keys(
         registry: &SchemaRegistry
@@ -57,12 +57,17 @@ module sas::schema_registry {
         vec_map::keys(&registry.schema_records)
     }
 
-    public fun status(
+    public fun creator(
         id: address,
         registry: &SchemaRegistry
-    ): Status {
+    ): address {
         assert!(registry.schema_records.contains(&id), ESchemaNotFound);
         *vec_map::get(&registry.schema_records, &id)
+    }
+
+    #[test_only]
+    public fun test_init(ctx: &mut TxContext) {
+        init(SCHEMA_REGISTRY {}, ctx);
     }
 
 }

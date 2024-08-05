@@ -7,10 +7,12 @@ module sas::sas {
     use sui::clock::{Self, Clock};
     use std::string;
 
-    use sas::schema_record::{Self, SchemaRecord, Request};
+    use sas::schema::{Self, SchemaRecord, Request};
+    use sas::attestation_registry::{AttestationRegistry};
 
     /// ========= Errors =========
     const EExpired: u64 = 0;
+    const ERefIdNotFound: u64 = 1;
 
     /// ========= Events  =========
     public struct Attest has copy, drop {
@@ -42,7 +44,7 @@ module sas::sas {
     }
 
     /// ========= Structs =========
-    public struct Attesttation has key {
+    public struct Attestation has key {
         id: UID,
         schema: address,
         ref_id: address,
@@ -59,43 +61,43 @@ module sas::sas {
 
     /// ========= Public-View Funtions =========
     
-    public fun schema(self: &Attesttation): address {
+    public fun schema(self: &Attestation): address {
         self.schema
     }
 
-    public fun ref_id(self: &Attesttation): address {
+    public fun ref_id(self: &Attestation): address {
         self.ref_id
     }
 
-    public fun attester(self: &Attesttation): address {
+    public fun attester(self: &Attestation): address {
         self.attester
     }
 
-    public fun time(self: &Attesttation): u64 {
+    public fun time(self: &Attestation): u64 {
         self.time
     }
 
-    public fun revokable(self: &Attesttation): bool {
+    public fun revokable(self: &Attestation): bool {
         self.revokable
     }
 
-    public fun expireation_time(self: &Attesttation): u64 {
+    public fun expireation_time(self: &Attestation): u64 {
         self.expireation_time
     }
 
-    public fun data(self: &Attesttation): vector<u8> {
+    public fun data(self: &Attestation): vector<u8> {
         self.data
     }
 
-    public fun name(self: &Attesttation): string::String {
+    public fun name(self: &Attestation): string::String {
         self.name
     }
 
-    public fun description(self: &Attesttation): string::String {
+    public fun description(self: &Attestation): string::String {
         self.description
     }
 
-    public fun url(self: &Attesttation): Url {
+    public fun url(self: &Attestation): Url {
         self.url
     }
 
@@ -103,6 +105,7 @@ module sas::sas {
     
     public fun attest(
         schema_record: &SchemaRecord,
+        attestation_registry: &mut AttestationRegistry,
         ref_id: address,
         recipient: address,
         revokeable: bool,
@@ -114,13 +117,17 @@ module sas::sas {
         time: &Clock,
         ctx: &mut TxContext
     ) {
+        if (ref_id != @0x0) {
+            assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
+        };
+        
         let attester = ctx.sender();
 
         if (expireation_time != 0) {
             assert!(time.timestamp_ms() < expireation_time, EExpired);
         };
 
-        let attestation = Attesttation {
+        let attestation = Attestation {
             id: object::new(ctx),
             schema: object::id_address(schema_record),
             time: clock::timestamp_ms(time),
@@ -155,6 +162,7 @@ module sas::sas {
 
     public fun attest_with_resolver(
         schema_record: &SchemaRecord,
+        attestation_registry: &mut AttestationRegistry,
         ref_id: address,
         recipient: address,
         revokable: bool,
@@ -167,15 +175,19 @@ module sas::sas {
         request: Request,
         ctx: &mut TxContext
     ) {
+        if (ref_id != @0x0) {
+            assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
+        };
+
         let attester = ctx.sender();
 
         if (expireation_time != 0) {
             assert!(time.timestamp_ms() < expireation_time, EExpired);
         };
 
-        schema_record::finish_attest(schema_record, request);
+        schema::finish_attest(schema_record, request);
 
-        let attestation = Attesttation {
+        let attestation = Attestation {
             id: object::new(ctx),
             schema: object::id_address(schema_record),
             time: clock::timestamp_ms(time),
