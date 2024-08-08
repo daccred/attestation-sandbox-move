@@ -1,5 +1,5 @@
 module sas::schema {
-    use std::string::String;
+    use std::string::{String};
     use sui::{
     bag::{Self, Bag},
     vec_map::{Self, VecMap},
@@ -25,6 +25,7 @@ module sas::schema {
     public struct SchemaRecord has key, store {
         id: UID,
         incrementing_id: u64,
+        attestation_cnt: u64,
         creator: address,
         created_at: u64,
         tx_hash: vector<u8>,
@@ -143,6 +144,7 @@ module sas::schema {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
             incrementing_id: schema_registry.next_id(),
+            attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
             tx_hash: *ctx.digest(),

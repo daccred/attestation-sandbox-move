@@ -20,6 +20,7 @@ module sas::sas {
         schema: address,
         ref_id: address,
         attester: address,
+        tx_hash: vector<u8>,
         revokable: bool,
         time: u64,
         expireation_time: u64,
@@ -34,6 +35,7 @@ module sas::sas {
         schema: address,
         ref_id: address,
         attester: address,
+        tx_hash: vector<u8>,
         revokable: bool,    
         time: u64,
         expireation_time: u64,
@@ -49,6 +51,7 @@ module sas::sas {
         schema: address,
         ref_id: address,
         attester: address,
+        tx_hash: vector<u8>,
         time: u64,
         revokable: bool,
         expireation_time: u64,
@@ -71,6 +74,10 @@ module sas::sas {
 
     public fun attester(self: &Attestation): address {
         self.attester
+    }
+
+    public fun tx_hash(self: &Attestation): vector<u8> {
+        self.tx_hash
     }
 
     public fun time(self: &Attestation): u64 {
@@ -134,6 +141,7 @@ module sas::sas {
             revokable: schema_record.revokable(),
             ref_id: ref_id,
             attester: attester,
+            tx_hash: *ctx.digest(),
             data: data,
             name: string::utf8(name),
             description: string::utf8(description),
@@ -148,6 +156,7 @@ module sas::sas {
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,
                 attester: attestation.attester,
+                tx_hash: *ctx.digest(),
                 revokable: attestation.revokable,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
@@ -194,6 +203,7 @@ module sas::sas {
             expireation_time: expireation_time,
             ref_id: ref_id,
             attester: attester,
+            tx_hash: *ctx.digest(),
             revokable: schema_record.revokable(),
             data: data,
             name: string::utf8(name),
@@ -207,6 +217,7 @@ module sas::sas {
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,
                 attester: attestation.attester,
+                tx_hash: *ctx.digest(),
                 revokable: attestation.revokable,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
