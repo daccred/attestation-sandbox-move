@@ -33,7 +33,7 @@ module sas::blocklist_tests {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
 
-            let (mut schema_record, mut resolver_builder) = schema::new_with_resolver(&mut schema_registry, schema, test_scenario::ctx(&mut scenario));
+            let (mut schema_record, mut resolver_builder) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
             let resolver_admin = blocklist::add(&schema_record, &mut resolver_builder, test_scenario::ctx(&mut scenario));
             schema_record.add_resolver(resolver_builder);
             
@@ -51,7 +51,6 @@ module sas::blocklist_tests {
                 &mut attestation_registry,
                 @0x0,
                 bob,
-                false,
                 0,
                 data,
                 name,

@@ -16,6 +16,7 @@ module sas::schema_registry {
 
     public struct SchemaRegistry has key, store {
         id: UID,
+        next_id: u64,
         schema_records: VecMap<address, address>, // SchemaRecord -> Creattor
     }
 
@@ -25,6 +26,7 @@ module sas::schema_registry {
     fun init(_otw: SCHEMA_REGISTRY, ctx: &mut TxContext) {
         let schema_registry = SchemaRegistry {
             id: object::new(ctx),
+            next_id: 1,
             schema_records: vec_map::empty(),
         };
 
@@ -42,6 +44,12 @@ module sas::schema_registry {
         self.schema_records.insert(schema_record, ctx.sender());
     }
 
+    public fun update_next_id(
+        self: &mut SchemaRegistry
+    ) {
+        self.next_id = self.next_id + 1;
+    }
+
     /// ========== Public-View Functions ==========
     
     public fun is_exist(
@@ -52,17 +60,23 @@ module sas::schema_registry {
     }
     
     public fun schema_keys(
-        registry: &SchemaRegistry
+        self: &SchemaRegistry
     ): vector<address> {
-        vec_map::keys(&registry.schema_records)
+        vec_map::keys(&self.schema_records)
     }
 
     public fun creator(
-        id: address,
-        registry: &SchemaRegistry
+        registry: &SchemaRegistry,
+        id: address
     ): address {
         assert!(registry.schema_records.contains(&id), ESchemaNotFound);
         *vec_map::get(&registry.schema_records, &id)
+    }
+
+    public fun next_id(
+        self: &SchemaRegistry
+    ): u64 {
+        self.next_id
     }
 
     #[test_only]

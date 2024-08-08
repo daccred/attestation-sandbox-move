@@ -24,7 +24,12 @@ module sas::schema {
 
     public struct SchemaRecord has key, store {
         id: UID,
+        incrementing_id: u64,
+        creator: address,
+        created_at: u64,
+        tx_hash: vector<u8>,
         schema: vector<u8>,
+        revokable: bool,
         resolver: Option<Resolver>
     }
 
@@ -69,6 +74,26 @@ module sas::schema {
         self.schema
     }
 
+    public fun created_at(self: &SchemaRecord): u64 {
+        self.created_at
+    }
+
+    public fun tx_hash(self: &SchemaRecord): vector<u8> {
+        self.tx_hash
+    }
+
+    public fun incrementing_id(self: &SchemaRecord): u64 {
+        self.incrementing_id
+    }
+
+    public fun creator(self: &SchemaRecord): address {
+        self.creator
+    }
+
+    public fun revokable(self: &SchemaRecord): bool {
+        self.revokable
+    }
+
     public fun addy(self: &SchemaRecord): address {
         self.id.to_address()
     }
@@ -111,14 +136,22 @@ module sas::schema {
 
     public fun new(
         schema_registry: &mut SchemaRegistry, 
-        schema: vector<u8> , 
+        schema: vector<u8>, 
+        revokable: bool,
         ctx: &mut TxContext
         ): SchemaRecord {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
+            incrementing_id: schema_registry.next_id(),
+            creator: ctx.sender(),
+            created_at: ctx.epoch_timestamp_ms(),
+            tx_hash: *ctx.digest(),
             schema: schema,
+            revokable: revokable,
             resolver: option::none()
         };
+
+        schema_registry.update_next_id();
 
         schema_registry.registry(object::id_address(&schema_record), ctx);
 
@@ -128,9 +161,10 @@ module sas::schema {
     public fun new_with_resolver(
         schema_registry: &mut SchemaRegistry,
         schema: vector<u8>,
+        revokable: bool,
         ctx: &mut TxContext,
     ): (SchemaRecord, ResolverBuilder) {
-        let self = new(schema_registry, schema, ctx);
+        let self = new(schema_registry, schema, revokable, ctx);
         let schema_address = object::id_address(&self);
         let resolver_builder = new_resolver_builder(schema_address, ctx);
         (

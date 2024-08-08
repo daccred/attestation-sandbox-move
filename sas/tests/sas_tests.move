@@ -38,14 +38,13 @@ module sas::sas_tests {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
 
-            let schema_record = schema::new(&mut schema_registry, schema, test_scenario::ctx(&mut scenario));
+            let schema_record = schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest(
                 &schema_record,
                 &mut attestation_registry,
                 @0x0,
                 user,
-                false,
                 0,
                 data,
                 name,
@@ -96,7 +95,7 @@ module sas::sas_tests {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
             
-            let (mut schema_record, mut resolver_builder) = schema::new_with_resolver(&mut schema_registry, schema, test_scenario::ctx(&mut scenario));
+            let (mut schema_record, mut resolver_builder) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
 
             add_rule(&mut resolver_builder, schema::start_attest_name());
 
@@ -111,7 +110,6 @@ module sas::sas_tests {
                 &mut attestation_registry,
                 @0x0,
                 user,
-                false,
                 0,
                 data,
                 name,
