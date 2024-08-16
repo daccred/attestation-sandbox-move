@@ -1,10 +1,9 @@
-# SAS Contracts
-Sui Attestation Service Contracts
+# MAS Contracts
+Move Attestation Service Contracts
 
-
-## Tasks
-| Task | Status |
+## Support Chain
+| Chain | Status |
 |----|----|
-| Revocable Attestation | ❎ |
-| Schema Registry | ❎ | 
-| Payment Sui | ❎ |
+| [Sui](./sas/README.md) | Testnet |
+| Movement | Comming soon |
+| Aptos | Comming soon |
