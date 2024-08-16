@@ -36,9 +36,15 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {   
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
+            schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            
+            test_scenario::return_shared<SchemaRegistry>(schema_registry);
+        };
+        
+        test_scenario::next_tx(&mut scenario, admin);
+        {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
-
-            let schema_record = schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest(
                 &schema_record,
@@ -54,19 +60,18 @@ module sas::sas_tests {
                 test_scenario::ctx(&mut scenario)
             );
 
-            test_scenario::return_shared<SchemaRegistry>(schema_registry);
             test_scenario::return_shared<AttestationRegistry>(attestation_registry);
-            transfer::public_transfer(schema_record, user);
+            test_scenario::return_shared<SchemaRecord>(schema_record);
             clock::share_for_testing(clock);
         };
 
         test_scenario::next_tx(&mut scenario, user);
         {
-            let schema_record = test_scenario::take_from_sender<SchemaRecord>(&scenario);
+            let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
             assert!(sas::schema(&attestation) == schema_record.addy());
 
-            test_scenario::return_to_sender<SchemaRecord>(&scenario, schema_record);
+            test_scenario::return_shared<SchemaRecord>(schema_record);
             test_scenario::return_to_sender<Attestation>(&scenario, attestation);
         };
 
