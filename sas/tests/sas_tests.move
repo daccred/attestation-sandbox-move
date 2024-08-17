@@ -44,10 +44,10 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
-            let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
+            let mut schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest(
-                &schema_record,
+                &mut schema_record,
                 &mut attestation_registry,
                 @0x0,
                 user,
@@ -111,7 +111,7 @@ module sas::sas_tests {
 
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
             sas::attest_with_resolver(
-                &schema_record,
+                &mut schema_record,
                 &mut attestation_registry,
                 @0x0,
                 user,

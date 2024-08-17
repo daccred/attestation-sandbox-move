@@ -111,7 +111,7 @@ module sas::sas {
     /// ========= Public Functions =========
     
     public fun attest(
-        schema_record: &SchemaRecord,
+        schema_record: &mut SchemaRecord,
         attestation_registry: &mut AttestationRegistry,
         ref_id: address,
         recipient: address,
@@ -132,6 +132,8 @@ module sas::sas {
         if (expireation_time != 0) {
             assert!(time.timestamp_ms() < expireation_time, EExpired);
         };
+
+        schema_record.update_attestation_cnt();
 
         let attestation = Attestation {
             id: object::new(ctx),
@@ -171,7 +173,7 @@ module sas::sas {
     }
 
     public fun attest_with_resolver(
-        schema_record: &SchemaRecord,
+        schema_record: &mut SchemaRecord,
         attestation_registry: &mut AttestationRegistry,
         ref_id: address,
         recipient: address,
@@ -187,6 +189,8 @@ module sas::sas {
         if (ref_id != @0x0) {
             assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
         };
+
+        schema_record.update_attestation_cnt();
 
         let attester = ctx.sender();
 

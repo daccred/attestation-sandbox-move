@@ -225,6 +225,9 @@ module sas::schema {
         }
     }
 
+    public fun update_attestation_cnt(self: &mut SchemaRecord) {
+        self.attestation_cnt = self.attestation_cnt + 1;
+    }
 
     /// ======== Private Functions ========
     
