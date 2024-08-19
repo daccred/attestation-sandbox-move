@@ -140,7 +140,7 @@ module sas::schema {
         schema: vector<u8>, 
         revokable: bool,
         ctx: &mut TxContext
-        ): SchemaRecord {
+        ) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
             incrementing_id: schema_registry.next_id(),
@@ -157,7 +157,7 @@ module sas::schema {
 
         schema_registry.registry(object::id_address(&schema_record), ctx);
 
-        schema_record
+        transfer::share_object(schema_record)
     }
 
     public fun new_with_resolver(
@@ -166,11 +166,27 @@ module sas::schema {
         revokable: bool,
         ctx: &mut TxContext,
     ): (SchemaRecord, ResolverBuilder) {
-        let self = new(schema_registry, schema, revokable, ctx);
-        let schema_address = object::id_address(&self);
+        let schema_record = SchemaRecord {
+            id: object::new(ctx),
+            incrementing_id: schema_registry.next_id(),
+            attestation_cnt: 0,
+            creator: ctx.sender(),
+            created_at: ctx.epoch_timestamp_ms(),
+            tx_hash: *ctx.digest(),
+            schema: schema,
+            revokable: revokable,
+            resolver: option::none()
+        };
+
+        schema_registry.update_next_id();
+
+        schema_registry.registry(object::id_address(&schema_record), ctx);
+
+
+        let schema_address = object::id_address(&schema_record);
         let resolver_builder = new_resolver_builder(schema_address, ctx);
         (
-            self,
+            schema_record,
             resolver_builder
         )
     }
@@ -209,6 +225,9 @@ module sas::schema {
         }
     }
 
+    public fun update_attestation_cnt(self: &mut SchemaRecord) {
+        self.attestation_cnt = self.attestation_cnt + 1;
+    }
 
     /// ======== Private Functions ========
     

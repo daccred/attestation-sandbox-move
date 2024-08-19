@@ -47,7 +47,7 @@ module sas::blocklist_tests {
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             sas::attest_with_resolver(
-                &schema_record,
+                &mut schema_record,
                 &mut attestation_registry,
                 @0x0,
                 bob,
