@@ -35,7 +35,6 @@ module sas::attestation_registry {
     }
 
     /// ========== Public-Mutating Functions ==========
-    
     public fun registry(
         self: &mut AttestationRegistry,
         attestation: address

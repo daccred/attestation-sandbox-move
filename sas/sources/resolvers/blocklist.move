@@ -4,7 +4,7 @@ module sas::blocklist {
 
     use fun string::utf8 as vector.utf8;
 
-    use sas::admin::{Self, Admin};
+    use sas::admin::{Admin};
     use sas::schema::{Self, SchemaRecord, ResolverBuilder, Request};
 
     /// ========= Errors =========
@@ -20,13 +20,11 @@ module sas::blocklist {
     
     /// ========= Public-Mutative Functions =========
     
-    public fun add(schema_record: &SchemaRecord, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext): Admin {
+    public fun add(schema_record: &SchemaRecord, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext) {
         assert!(schema_record.addy() == resolver_builder.schema_address_from_builder(), EInvalideSchemaAddress);
 
         resolver_builder.add_rule(schema::start_attest_name().utf8(), BlocklistResolver {});
         resolver_builder.add_rule_config(BlocklistResolver {}, Blocklist { inner: table::new(ctx) });
-
-        admin::new(resolver_builder.schema_address_from_builder(), ctx)
     }
 
     public fun approve(schema_record: &SchemaRecord, request: &mut Request, ctx: &mut TxContext) {
