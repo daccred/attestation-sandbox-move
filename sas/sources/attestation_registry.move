@@ -20,6 +20,7 @@ module sas::attestation_registry {
 
     public struct AttestationRegistry has key, store {
         id: UID,
+        attestation_cnt: u64,
         attestations: VecMap<address, Status>,
     }
 
@@ -28,6 +29,7 @@ module sas::attestation_registry {
     fun init(_otw: ATTESTATION_REGISTRY, ctx: &mut TxContext) {
         let attestation_registry = AttestationRegistry {
             id: object::new(ctx),
+            attestation_cnt: 0,
             attestations: vec_map::empty(),
         };
 
@@ -44,6 +46,7 @@ module sas::attestation_registry {
             is_revoked: false,
             timestamp: 0,
         });
+        self.attestation_cnt = self.attestation_cnt + 1;
     }
 
     /// ========== Public-View Functions ==========
@@ -76,6 +79,22 @@ module sas::attestation_registry {
         let status = self.status(attestation);
         let Status { is_revoked, .. } = status;
         is_revoked
+    }
+
+    public fun get_attestations_paginated(
+        self: &AttestationRegistry,
+        start: u64,
+        limit: u64
+    ): vector<address> {
+        let mut start_index = start;
+        let mut result = vector::empty<address>();
+        let mut keys = self.attestations.keys();
+        let end_index = std::u64::min(start_index + limit, self.attestation_cnt);
+        while (start_index < end_index) {
+            vector::push_back(&mut result, vector::remove(&mut keys, start_index));
+            start_index = start_index + 1;
+        };
+        result
     }
 
     #[test_only]

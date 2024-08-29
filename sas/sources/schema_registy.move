@@ -79,6 +79,23 @@ module sas::schema_registry {
         self.next_id
     }
 
+    public fun get_schema_paginated(
+        self: &SchemaRegistry,
+        start: u64,
+        limit: u64
+    ): vector<address> {
+        let mut start_index = start;
+        let end_index = std::u64::min(start + limit, self.next_id);
+        let mut keys = self.schema_records.keys();
+        let mut result = vector::empty<address>();
+        while(start_index < end_index) {
+            vector::push_back(&mut result, vector::remove(&mut keys, start_index));
+            start_index = start_index + 1;
+        };
+        result
+    }
+
+
     #[test_only]
     public fun test_init(ctx: &mut TxContext) {
         init(SCHEMA_REGISTRY {}, ctx);
