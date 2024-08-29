@@ -7,6 +7,7 @@ module sas::schema_registry {
 
     const ESchemaNotFound: u64 = 0;
     const ESchmaAlreadyExist: u64 = 1;
+    const EInvalidStartIndex: u64 = 2;
 
     /// ======== OTW ========
     
@@ -84,14 +85,19 @@ module sas::schema_registry {
         start: u64,
         limit: u64
     ): vector<address> {
-        let mut start_index = start;
-        let end_index = std::u64::min(start + limit, self.next_id);
-        let mut keys = self.schema_records.keys();
+        let total = vec_map::size(&self.schema_records);
+        assert!(start < total, EInvalidStartIndex);
+
+        let end = std::u64::min(start + limit, total);
+        let keys = vec_map::keys(&self.schema_records);
+        
         let mut result = vector::empty<address>();
-        while(start_index < end_index) {
-            vector::push_back(&mut result, vector::remove(&mut keys, start_index));
-            start_index = start_index + 1;
+        let mut i = start;
+        while (i < end) {
+            vector::push_back(&mut result, *vector::borrow(&keys, i));
+            i = i + 1;
         };
+        
         result
     }
 

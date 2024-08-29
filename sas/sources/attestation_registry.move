@@ -6,6 +6,7 @@ module sas::attestation_registry {
     /// ======== Errors ========
 
     const EAttestationNotFound: u64 = 0;
+    const EInvalidStartIndex: u64 = 1;
 
     /// ======== OTW ========
     
@@ -86,14 +87,19 @@ module sas::attestation_registry {
         start: u64,
         limit: u64
     ): vector<address> {
-        let mut start_index = start;
+        let total = vec_map::size(&self.attestations);
+        assert!(start < total, EInvalidStartIndex);
+
+        let end = std::u64::min(start + limit, total);
+        let keys = vec_map::keys(&self.attestations);
+        
         let mut result = vector::empty<address>();
-        let mut keys = self.attestations.keys();
-        let end_index = std::u64::min(start_index + limit, self.attestation_cnt);
-        while (start_index < end_index) {
-            vector::push_back(&mut result, vector::remove(&mut keys, start_index));
-            start_index = start_index + 1;
+        let mut i = start;
+        while (i < end) {
+            vector::push_back(&mut result, *vector::borrow(&keys, i));
+            i = i + 1;
         };
+        
         result
     }
 
