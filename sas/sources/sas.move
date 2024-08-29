@@ -13,6 +13,7 @@ module sas::sas {
     /// ========= Errors =========
     const EExpired: u64 = 0;
     const ERefIdNotFound: u64 = 1;
+    const EHasResolver: u64 = 2;
 
     /// ========= Events  =========
     public struct Attest has copy, drop {
@@ -123,6 +124,7 @@ module sas::sas {
         time: &Clock,
         ctx: &mut TxContext
     ) {
+        assert!(!schema_record.has_resolver(), EHasResolver);
         if (ref_id != @0x0) {
             assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
         };
@@ -198,7 +200,7 @@ module sas::sas {
             assert!(time.timestamp_ms() < expireation_time, EExpired);
         };
 
-        schema::finish_attest(schema_record, request);
+        schema::finish_attest( schema_record, request);
 
         let attestation = Attestation {
             id: object::new(ctx),

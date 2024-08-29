@@ -42,11 +42,11 @@ module sas::schema_registry {
     ) {
         assert!(!self.is_exist(schema_record), ESchmaAlreadyExist);
         self.schema_records.insert(schema_record, ctx.sender());
+        self.update_next_id();
     }
 
-    public fun update_next_id(
-        self: &mut SchemaRegistry
-    ) {
+    /// ========== Private Functions ==========
+    fun update_next_id(self: &mut SchemaRegistry) {
         self.next_id = self.next_id + 1;
     }
 

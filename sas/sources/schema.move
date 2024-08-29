@@ -8,6 +8,7 @@ module sas::schema {
     use std::type_name::{Self, TypeName};
 
     use sas::schema_registry::{SchemaRegistry};
+    use sas::admin::{Self, Admin};
 
     /// ======== Errors ========
     
@@ -21,7 +22,6 @@ module sas::schema {
     const START_ATTEST: vector<u8> = b"START_ATTEST";
 
     /// ======== Structs ========
-
     public struct SchemaRecord has key, store {
         id: UID,
         incrementing_id: u64,
@@ -54,7 +54,7 @@ module sas::schema {
     /// === Public Mutative Functions ===
     
     public fun start_attest(self: &SchemaRecord): Request {
-        assert!(self.has_resolver(), ENoResolver);
+        assert!(self.has_resolver(), ENoResolver);  
         new_request(self, START_ATTEST.to_string())
     }
 
@@ -140,7 +140,7 @@ module sas::schema {
         schema: vector<u8>, 
         revokable: bool,
         ctx: &mut TxContext
-        ) {
+        ): Admin {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
             incrementing_id: schema_registry.next_id(),
@@ -153,11 +153,12 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.update_next_id();
-
         schema_registry.registry(object::id_address(&schema_record), ctx);
 
-        transfer::share_object(schema_record)
+        let admin_cap = admin::new(schema_record.addy(), ctx);
+        transfer::share_object(schema_record);
+
+        admin_cap
     }
 
     public fun new_with_resolver(
@@ -165,7 +166,7 @@ module sas::schema {
         schema: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext,
-    ): (SchemaRecord, ResolverBuilder) {
+    ): (SchemaRecord, ResolverBuilder, Admin) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
             incrementing_id: schema_registry.next_id(),
@@ -178,23 +179,25 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.update_next_id();
-
         schema_registry.registry(object::id_address(&schema_record), ctx);
-
-
+        
+        let admin_cap = admin::new(schema_record.addy(), ctx);
         let schema_address = object::id_address(&schema_record);
-        let resolver_builder = new_resolver_builder(schema_address, ctx);
+        let resolver_builder = new_resolver_builder(&admin_cap, schema_address, ctx);
+        
         (
             schema_record,
-            resolver_builder
+            resolver_builder,
+            admin_cap
         )
     }
 
     public fun new_resolver_builder(
+        admin: &Admin,
         schema_address: address,
         ctx: &mut TxContext
     ): ResolverBuilder {
+        admin.assert_schema(schema_address);
         let mut rules = vec_map::empty();
         rules.insert(START_ATTEST.to_string(), vec_set::empty());
 
@@ -225,6 +228,7 @@ module sas::schema {
         }
     }
 
+    // TODO: Need to add permission verification？
     public fun update_attestation_cnt(self: &mut SchemaRecord) {
         self.attestation_cnt = self.attestation_cnt + 1;
     }

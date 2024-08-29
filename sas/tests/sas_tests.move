@@ -36,8 +36,9 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {   
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let admin_cap = schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
             
+            transfer::public_transfer(admin_cap, admin);
             test_scenario::return_shared<SchemaRegistry>(schema_registry);
         };
         
@@ -100,7 +101,7 @@ module sas::sas_tests {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
             
-            let (mut schema_record, mut resolver_builder) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let (mut schema_record, mut resolver_builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
 
             add_rule(&mut resolver_builder, schema::start_attest_name());
 
@@ -129,6 +130,7 @@ module sas::sas_tests {
             test_scenario::return_shared<AttestationRegistry>(attestation_registry);
 
             transfer::public_transfer(schema_record, user);
+            transfer::public_transfer(admin_cap, admin);
             clock::share_for_testing(clock);
         };
 
