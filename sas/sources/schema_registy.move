@@ -85,7 +85,7 @@ module sas::schema_registry {
         limit: u64
     ): vector<address> {
         let mut start_index = start;
-        let end_index = std::u64::min(start + limit, vector::length(&self.schema_records.keys()));
+        let end_index = std::u64::min(start + limit, self.next_id);
         let mut keys = self.schema_records.keys();
         let mut result = vector::empty<address>();
         while(start_index < end_index) {

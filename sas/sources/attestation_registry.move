@@ -89,7 +89,7 @@ module sas::attestation_registry {
         let mut start_index = start;
         let mut result = vector::empty<address>();
         let mut keys = self.attestations.keys();
-        let end_index = std::u64::min(start_index + limit, vector::length(&keys));
+        let end_index = std::u64::min(start_index + limit, self.attestation_cnt);
         while (start_index < end_index) {
             vector::push_back(&mut result, vector::remove(&mut keys, start_index));
             start_index = start_index + 1;
