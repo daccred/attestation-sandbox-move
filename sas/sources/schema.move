@@ -166,7 +166,7 @@ module sas::schema {
         schema: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext,
-    ): (SchemaRecord, ResolverBuilder, Admin) {
+    ): (ResolverBuilder, Admin) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
             incrementing_id: schema_registry.next_id(),
@@ -185,8 +185,9 @@ module sas::schema {
         let schema_address = object::id_address(&schema_record);
         let resolver_builder = new_resolver_builder(&admin_cap, schema_address, ctx);
         
+        transfer::share_object(schema_record);
+        
         (
-            schema_record,
             resolver_builder,
             admin_cap
         )

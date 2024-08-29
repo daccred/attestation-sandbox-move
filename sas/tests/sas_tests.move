@@ -90,6 +90,7 @@ module sas::sas_tests {
         let description: vector<u8> = b"Profile of a user";
         let url: vector<u8> = b"https://example.com";
 
+        let mut resolver_builder: ResolverBuilder;
         let mut scenario = test_scenario::begin(admin);
         {
             schema_registry::test_init(test_scenario::ctx(&mut scenario));
@@ -99,9 +100,17 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
+            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+
+            resolver_builder = builder;
+            transfer::public_transfer(admin_cap, admin);
+            test_scenario::return_shared<SchemaRegistry>(schema_registry);
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let mut schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
-            
-            let (mut schema_record, mut resolver_builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
 
             add_rule(&mut resolver_builder, schema::start_attest_name());
 
@@ -126,21 +135,18 @@ module sas::sas_tests {
                 test_scenario::ctx(&mut scenario)
             );
 
-            test_scenario::return_shared<SchemaRegistry>(schema_registry);
             test_scenario::return_shared<AttestationRegistry>(attestation_registry);
-
-            transfer::public_transfer(schema_record, user);
-            transfer::public_transfer(admin_cap, admin);
+            test_scenario::return_shared<SchemaRecord>(schema_record);
             clock::share_for_testing(clock);
         };
 
         test_scenario::next_tx(&mut scenario, user);
         {
-            let schema_record = test_scenario::take_from_sender<SchemaRecord>(&scenario);
+            let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
             assert!(sas::schema(&attestation) == schema_record.addy());
 
-            test_scenario::return_to_sender<SchemaRecord>(&scenario, schema_record);
+            test_scenario::return_shared<SchemaRecord>(schema_record);
             test_scenario::return_to_sender<Attestation>(&scenario, attestation);
         };
 
