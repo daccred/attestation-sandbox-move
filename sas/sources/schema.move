@@ -143,7 +143,7 @@ module sas::schema {
         ): Admin {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.next_id(),
+            incrementing_id: schema_registry.size(),
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
@@ -169,7 +169,7 @@ module sas::schema {
     ): (ResolverBuilder, Admin) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.next_id(),
+            incrementing_id: schema_registry.size(),
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
