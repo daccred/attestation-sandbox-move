@@ -3,7 +3,8 @@ module sas::schema {
     use sui::{
     bag::{Self, Bag},
     vec_map::{Self, VecMap},
-    vec_set::{Self, VecSet}
+    vec_set::{Self, VecSet},
+    event::{emit},
     };
     use std::type_name::{Self, TypeName};
 
@@ -16,6 +17,20 @@ module sas::schema {
     const ENoResolver: u64 = 1;
     const EMustBeFinishRequest: u64 = 2;
     const ERuleNotApproved: u64 = 3;
+
+
+    /// ======== Events ========
+    public struct SchemaCreated has copy, drop {
+        /// 0: SchemaCreated, 1: SchemaCreatedWithResolver
+        event_type: u8,
+        incrementing_id: u64,
+        schema_address: address,
+        creator: address,
+        created_at: u64,
+        tx_hash: vector<u8>,
+        schema: vector<u8>,
+        revokable: bool
+    }
 
     /// ======== Constants ========
 
@@ -153,7 +168,19 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.registry(object::id_address(&schema_record), ctx);
+        schema_registry.registry(schema_record.addy(), ctx);
+        emit(
+            SchemaCreated {
+                event_type: 0,
+                incrementing_id: schema_record.incrementing_id,
+                schema_address: schema_record.addy(),
+                creator: schema_record.creator,
+                created_at: schema_record.created_at,
+                tx_hash: schema_record.tx_hash,
+                schema: schema_record.schema,
+                revokable: schema_record.revokable
+            }
+        );
 
         let admin_cap = admin::new(schema_record.addy(), ctx);
         transfer::share_object(schema_record);
@@ -179,11 +206,22 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.registry(object::id_address(&schema_record), ctx);
+        schema_registry.registry(schema_record.addy(), ctx);
+        emit(
+            SchemaCreated {
+                event_type: 1,
+                incrementing_id: schema_record.incrementing_id,
+                schema_address: schema_record.addy(),
+                creator: schema_record.creator,
+                created_at: schema_record.created_at,
+                tx_hash: schema_record.tx_hash,
+                schema: schema_record.schema,
+                revokable: schema_record.revokable
+            }
+        );
         
         let admin_cap = admin::new(schema_record.addy(), ctx);
-        let schema_address = object::id_address(&schema_record);
-        let resolver_builder = new_resolver_builder(&admin_cap, schema_address, ctx);
+        let resolver_builder = new_resolver_builder(&admin_cap, schema_record.addy(), ctx);
         
         transfer::share_object(schema_record);
         

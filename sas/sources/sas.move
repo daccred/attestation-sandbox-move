@@ -17,27 +17,14 @@ module sas::sas {
 
     /// ========= Events  =========
     public struct Attest has copy, drop {
+        /// 0: Attest, 1: AttestWithResolver
+        event_type: u8,
         id: address,
         schema: address,
         ref_id: address,
         attester: address,
         tx_hash: vector<u8>,
         revokable: bool,
-        time: u64,
-        expireation_time: u64,
-        data: vector<u8>,
-        name: string::String,
-        description: string::String,
-        url: Url,
-    }
-
-    public struct AttestWithResolver has copy, drop {
-        id: address,
-        schema: address,
-        ref_id: address,
-        attester: address,
-        tx_hash: vector<u8>,
-        revokable: bool,    
         time: u64,
         expireation_time: u64,
         data: vector<u8>,
@@ -156,6 +143,7 @@ module sas::sas {
 
         emit(
             Attest {
+                event_type: 0,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,
@@ -218,7 +206,8 @@ module sas::sas {
         };
 
         emit(
-            AttestWithResolver {
+            Attest {
+                event_type: 1,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,
