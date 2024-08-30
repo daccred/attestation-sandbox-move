@@ -1,4 +1,5 @@
 module sas::schema_registry { 
+    // === Imports ===
     use sui::{
         table::{Self, Table},
         versioned::{Self, Versioned},
@@ -6,15 +7,14 @@ module sas::schema_registry {
     };
     use sas::constants;
 
-    // ==== Errors ====
+    // === Errors ===
     const EVersionNotEnabled: u64 = 0;
     const ESchmaAlreadyExist: u64 = 1;
 
-    // ==== OTW ====
+    // === OTW ===
     public struct SCHEMA_REGISTRY has drop {}
 
-    // ==== Structs ====
-
+    // === Structs ===
     public struct SchemaRegistry has key, store {
         id: UID,
         inner: Versioned,
@@ -26,7 +26,7 @@ module sas::schema_registry {
         schema_records: Table<address, address>,
     }
 
-    // ==== Init Function ====
+    // === Init Function ===
     fun init(_otw: SCHEMA_REGISTRY, ctx: &mut TxContext) {
         let registry_inner = RegistryInner {
             allowed_versions: vec_set::singleton(constants::current_version()),
@@ -44,7 +44,7 @@ module sas::schema_registry {
         transfer::share_object(schema_registry);
     }
 
-    // ==== Public-Mutating Functions ====
+    // === Public-Mutative Functions ===
     public fun registry(
         self: &mut SchemaRegistry,
         schema_record: address,
@@ -76,7 +76,7 @@ module sas::schema_registry {
         inner
     }
 
-    // ==== Public-View Functions ====
+    // === Public-View Functions ===
     public fun is_exist(self: &SchemaRegistry, schema_record: address): bool {
         let inner = self.load_inner();
         inner.schema_records.contains(schema_record)
@@ -97,7 +97,7 @@ module sas::schema_registry {
         table::length(&inner.schema_records)
     }
 
-    // ==== Test Functions ====
+    // === Test Functions ===
     #[test_only]
     public fun test_init(ctx: &mut TxContext) {
         init(SCHEMA_REGISTRY {}, ctx);

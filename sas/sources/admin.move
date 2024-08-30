@@ -1,4 +1,6 @@
+/// Module: admin
 module sas::admin {
+    // === Errors ===
     const EInvalideSchemaAddress: u64 = 0;
 
     public struct Admin has key, store {
@@ -6,8 +8,7 @@ module sas::admin {
         schema: address,
     }
 
-    /// ======== Public-View Functions ========
-
+    // === Public-View Functions ===
     public fun addy(self: &Admin): address {
         self.id.to_address()
     }
@@ -20,16 +21,14 @@ module sas::admin {
         assert!(self.schema == schema, EInvalideSchemaAddress);
     }
 
-    /// ======== Admin Functions ========
-    
+    // === Admin Functions ===
     public fun destroy(admin: Admin) {
         let Admin { id, schema: _ } = admin;
 
         id.delete();
     }
 
-    /// ======== Public Functions ========
-
+    // === Public-Mutative Functions ===
     public fun new(schema: address, ctx: &mut TxContext): Admin {
         Admin {
             id: object::new(ctx),

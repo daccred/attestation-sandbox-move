@@ -48,7 +48,7 @@ module sas::attestation_registry {
         transfer::share_object(attestation_registry);
     }
 
-    // === Public-Mutating Functions ===
+    // === Public-Mutative Functions ===
     public fun registry(self: &mut AttestationRegistry, attestation: address) {
         let inner = self.load_inner_mut();
         assert!(!inner.attestations_status.contains(attestation), EAttestationNotFound);

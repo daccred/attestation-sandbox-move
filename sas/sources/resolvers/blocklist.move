@@ -1,25 +1,26 @@
+/// Module: blocklist
 module sas::blocklist {
+    // === Imports ===
     use sui::table::{Self, Table};
     use std::string;
-
-    use fun string::utf8 as vector.utf8;
-
     use sas::admin::{Admin};
     use sas::schema::{Self, SchemaRecord, ResolverBuilder, Request};
 
-    /// ========= Errors =========
+    // === Errors ===
     const EInvalideSchemaAddress: u64 = 0;
     const EBlocked: u64 = 1;
 
-    /// ========= Structs =========
+    // === Structs ===
     public struct BlocklistResolver has drop {}
 
     public struct Blocklist has store {
       inner: Table<address, bool>
     }
+
+    // === Method Aliases ===
+    use fun string::utf8 as vector.utf8;
     
-    /// ========= Public-Mutative Functions =========
-    
+    // === Public-Mutative Functions ===
     public fun add(schema_record: &SchemaRecord, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext) {
         assert!(schema_record.addy() == resolver_builder.schema_address_from_builder(), EInvalideSchemaAddress);
 
@@ -37,14 +38,12 @@ module sas::blocklist {
         request.approve(BlocklistResolver {});
     }
 
-    /// ========= Public-View Functions =========
-    
+    // === Public-View Functions ===
     public fun is_blocklisted(schema_record: &SchemaRecord, user: address): bool {
         schema_record.config<BlocklistResolver, Blocklist>().inner.contains(user)
     }
 
-    /// ========= Admin Functions =========
-    
+    // === Admin Functions ===
     public fun add_user(admin: &Admin, schema_record: &mut SchemaRecord, user: address) {
         admin.assert_schema(schema_record.addy());
 

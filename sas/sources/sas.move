@@ -1,21 +1,23 @@
 
 /// Module: sas
 module sas::sas {
-    use sui::tx_context::{sender};
-    use sui::url::{Self, Url};
-    use sui::event::{emit};
-    use sui::clock::{Self, Clock};
+    // === Imports ===
+    use sui::{
+        tx_context::{sender},
+        url::{Self, Url},
+        event::{emit},
+        clock::{Self, Clock},
+    };
     use std::string;
-
     use sas::schema::{Self, SchemaRecord, Request};
     use sas::attestation_registry::{AttestationRegistry};
 
-    /// ========= Errors =========
+    // === Errors ===
     const EExpired: u64 = 0;
     const ERefIdNotFound: u64 = 1;
     const EHasResolver: u64 = 2;
 
-    /// ========= Events  =========
+    // === Events ===
     public struct Attest has copy, drop {
         /// 0: Attest, 1: AttestWithResolver
         event_type: u8,
@@ -33,7 +35,7 @@ module sas::sas {
         url: Url,
     }
 
-    /// ========= Structs =========
+    // === Structs ===
     public struct Attestation has key {
         id: UID,
         schema: address,
@@ -50,8 +52,7 @@ module sas::sas {
     }
 
 
-    /// ========= Public-View Funtions =========
-    
+    // === Public-View Functions ===
     public fun schema(self: &Attestation): address {
         self.schema
     }
@@ -96,8 +97,7 @@ module sas::sas {
         self.url
     }
 
-    /// ========= Public Functions =========
-    
+    // === Public Functions ===
     public fun attest(
         schema_record: &mut SchemaRecord,
         attestation_registry: &mut AttestationRegistry,
