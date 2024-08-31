@@ -5,16 +5,21 @@ module sas::attestation_registry {
         vec_set::{Self, VecSet},
     };
     use sas::constants;
+    use sas::admin::{Admin};
+    use sas::schema::{SchemaRecord};
 
     // === Errors ===
     const EAttestationNotFound: u64 = 0;
     const EVersionNotEnabled: u64 = 1;
+    const EAttestationAlreadyRevoked: u64 = 2;
+    const ENotBelongToSchema: u64 = 3;
 
     // === OTW ===
     public struct ATTESTATION_REGISTRY has drop {}
 
     // === Structs ===
     public struct Status has copy, store {
+        schema_address: address,
         is_revoked: bool,
         timestamp: u64,
     }
@@ -49,13 +54,35 @@ module sas::attestation_registry {
     }
 
     // === Public-Mutative Functions ===
-    public fun registry(self: &mut AttestationRegistry, attestation: address) {
+    public fun registry(self: &mut AttestationRegistry, attestation: address, schema_address: address) {
         let inner = self.load_inner_mut();
         assert!(!inner.attestations_status.contains(attestation), EAttestationNotFound);
         table::add(&mut inner.attestations_status, attestation, Status {
             is_revoked: false,
             timestamp: 0,
+            schema_address,
         });
+    }
+
+    public fun revoke(
+        admin: &Admin,
+        self: &mut AttestationRegistry,
+        schema_record: &mut SchemaRecord,
+        attestation: address,
+        ctx: &mut TxContext
+    ) {
+        admin.assert_schema(schema_record.addy());
+        assert!(self.is_exist(attestation), EAttestationNotFound);
+
+        let inner = self.load_inner_mut();
+        assert!(inner.attestations_status.contains(attestation), EAttestationNotFound);
+        
+        let status = table::borrow_mut(&mut inner.attestations_status, attestation);
+        assert!(!status.is_revoked, EAttestationAlreadyRevoked);
+        assert!(status.schema_address == schema_record.addy(), ENotBelongToSchema);
+
+        status.is_revoked = true;
+        status.timestamp = ctx.epoch_timestamp_ms();
     }
 
     // === Public-Package Functions ===
