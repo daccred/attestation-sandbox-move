@@ -1,6 +1,6 @@
 #[test_only]
 module sas::sas_tests {
-    use std::string;
+    use std::string::{Self, String};
     use sui::{
         test_scenario::{Self},
         clock::{Self}
@@ -20,7 +20,7 @@ module sas::sas_tests {
     fun test_attest() {
         let admin: address = @0x1;
         let user: address = @0x2;
-
+        let label: String = string::utf8(b"Profile");
         let schema: vector<u8> = b"name: string, age: u64";
         let data: vector<u8> = b"alice, 100";
         let name: vector<u8> = b"Profile";
@@ -36,7 +36,7 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {   
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let admin_cap = schema::new(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let admin_cap = schema::new(&mut schema_registry, schema, label, false, test_scenario::ctx(&mut scenario));
             
             transfer::public_transfer(admin_cap, admin);
             test_scenario::return_shared<SchemaRegistry>(schema_registry);
@@ -83,7 +83,7 @@ module sas::sas_tests {
     fun test_attest_with_resolver() {
         let admin: address = @0x1;
         let user: address = @0x2;
-
+        let label: String = string::utf8(b"Profile");
         let schema: vector<u8> = b"name: string, age: u64";
         let data: vector<u8> = b"alice, 100";
         let name: vector<u8> = b"Profile";
@@ -100,7 +100,7 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, label, false, test_scenario::ctx(&mut scenario));
 
             resolver_builder = builder;
             transfer::public_transfer(admin_cap, admin);

@@ -25,6 +25,7 @@ module sas::schema {
         /// 0: SchemaCreated, 1: SchemaCreatedWithResolver
         event_type: u8,
         incrementing_id: u64,
+        label: String,
         schema_address: address,
         creator: address,
         created_at: u64,
@@ -41,6 +42,7 @@ module sas::schema {
         id: UID,
         incrementing_id: u64,
         attestation_cnt: u64,
+        label: String,
         creator: address,
         created_at: u64,
         tx_hash: vector<u8>,
@@ -86,6 +88,10 @@ module sas::schema {
 
     public fun schema(self: &SchemaRecord): vector<u8> {
         self.schema
+    }
+
+    public fun label(self: &SchemaRecord): String {
+        self.label
     }
 
     public fun created_at(self: &SchemaRecord): u64 {
@@ -150,6 +156,7 @@ module sas::schema {
     public fun new(
         schema_registry: &mut SchemaRegistry, 
         schema: vector<u8>, 
+        label: String,
         revokable: bool,
         ctx: &mut TxContext
         ): Admin {
@@ -157,6 +164,7 @@ module sas::schema {
             id: object::new(ctx),
             incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
+            label: label,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
             tx_hash: *ctx.digest(),
@@ -170,6 +178,7 @@ module sas::schema {
             SchemaCreated {
                 event_type: 0,
                 incrementing_id: schema_record.incrementing_id,
+                label: schema_record.label,
                 schema_address: schema_record.addy(),
                 creator: schema_record.creator,
                 created_at: schema_record.created_at,
@@ -188,6 +197,7 @@ module sas::schema {
     public fun new_with_resolver(
         schema_registry: &mut SchemaRegistry,
         schema: vector<u8>,
+        label: String,
         revokable: bool,
         ctx: &mut TxContext,
     ): (ResolverBuilder, Admin) {
@@ -195,6 +205,7 @@ module sas::schema {
             id: object::new(ctx),
             incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
+            label: label,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
             tx_hash: *ctx.digest(),
@@ -208,6 +219,7 @@ module sas::schema {
             SchemaCreated {
                 event_type: 1,
                 incrementing_id: schema_record.incrementing_id,
+                label: schema_record.label,
                 schema_address: schema_record.addy(),
                 creator: schema_record.creator,
                 created_at: schema_record.created_at,

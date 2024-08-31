@@ -4,6 +4,7 @@ module sas::blocklist_tests {
         test_scenario::{Self},
         clock::{Self}
     };
+    use std::string::{Self, String};
     use sas::sas::{Self, Attestation};
     use sas::schema::{Self, SchemaRecord, ResolverBuilder};
     use sas::blocklist::{Self};
@@ -17,6 +18,7 @@ module sas::blocklist_tests {
         let bob: address = @0x2;
         let cathrine: address = @0x3;
 
+        let label: String = string::utf8(b"Profile");
         let schema: vector<u8> = b"name: string, age: u64";
         let data: vector<u8> = b"alice, 100";
         let name: vector<u8> = b"Profile";
@@ -33,7 +35,7 @@ module sas::blocklist_tests {
         test_scenario::next_tx(&mut scenario, alice);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, false, test_scenario::ctx(&mut scenario));
+            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, label, false, test_scenario::ctx(&mut scenario));
             resolver_builder = builder;
 
             transfer::public_transfer(admin_cap, alice);
