@@ -1,22 +1,26 @@
 
 /// Module: sas
 module sas::sas {
-    use sui::tx_context::{sender};
-    use sui::url::{Self, Url};
-    use sui::event::{emit};
-    use sui::clock::{Self, Clock};
+    // === Imports ===
+    use sui::{
+        tx_context::{sender},
+        url::{Self, Url},
+        event::{emit},
+        clock::{Self, Clock},
+    };
     use std::string;
-
     use sas::schema::{Self, SchemaRecord, Request};
     use sas::attestation_registry::{AttestationRegistry};
 
-    /// ========= Errors =========
+    // === Errors ===
     const EExpired: u64 = 0;
     const ERefIdNotFound: u64 = 1;
     const EHasResolver: u64 = 2;
 
-    /// ========= Events  =========
+    // === Events ===
     public struct Attest has copy, drop {
+        /// 0: Attest, 1: AttestWithResolver
+        event_type: u8,
         id: address,
         schema: address,
         ref_id: address,
@@ -31,22 +35,7 @@ module sas::sas {
         url: Url,
     }
 
-    public struct AttestWithResolver has copy, drop {
-        id: address,
-        schema: address,
-        ref_id: address,
-        attester: address,
-        tx_hash: vector<u8>,
-        revokable: bool,    
-        time: u64,
-        expireation_time: u64,
-        data: vector<u8>,
-        name: string::String,
-        description: string::String,
-        url: Url,
-    }
-
-    /// ========= Structs =========
+    // === Structs ===
     public struct Attestation has key {
         id: UID,
         schema: address,
@@ -63,8 +52,7 @@ module sas::sas {
     }
 
 
-    /// ========= Public-View Funtions =========
-    
+    // === Public-View Functions ===
     public fun schema(self: &Attestation): address {
         self.schema
     }
@@ -109,8 +97,7 @@ module sas::sas {
         self.url
     }
 
-    /// ========= Public Functions =========
-    
+    // === Public Functions ===
     public fun attest(
         schema_record: &mut SchemaRecord,
         attestation_registry: &mut AttestationRegistry,
@@ -156,6 +143,7 @@ module sas::sas {
 
         emit(
             Attest {
+                event_type: 0,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,
@@ -218,7 +206,8 @@ module sas::sas {
         };
 
         emit(
-            AttestWithResolver {
+            Attest {
+                event_type: 1,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
                 ref_id: attestation.ref_id,

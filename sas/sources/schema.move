@@ -1,27 +1,42 @@
 module sas::schema {
-    use std::string::{String};
-    use sui::{
-    bag::{Self, Bag},
-    vec_map::{Self, VecMap},
-    vec_set::{Self, VecSet}
+    // === Imports ===
+    use std::{
+        string::{String}, 
+        type_name::{Self, TypeName}
     };
-    use std::type_name::{Self, TypeName};
-
+    use sui::{
+        bag::{Self, Bag},
+        vec_map::{Self, VecMap},
+        vec_set::{Self, VecSet},
+        event::{emit},
+    };
     use sas::schema_registry::{SchemaRegistry};
     use sas::admin::{Self, Admin};
 
-    /// ======== Errors ========
-    
+    // ==== Errors ====
     const EWrongSchemaAddress: u64 = 0;
     const ENoResolver: u64 = 1;
     const EMustBeFinishRequest: u64 = 2;
     const ERuleNotApproved: u64 = 3;
 
-    /// ======== Constants ========
 
+    // ==== Events ====
+    public struct SchemaCreated has copy, drop {
+        /// 0: SchemaCreated, 1: SchemaCreatedWithResolver
+        event_type: u8,
+        incrementing_id: u64,
+        schema_address: address,
+        creator: address,
+        created_at: u64,
+        tx_hash: vector<u8>,
+        schema: vector<u8>,
+        revokable: bool
+    }
+
+    // ==== Constants ====
     const START_ATTEST: vector<u8> = b"START_ATTEST";
 
-    /// ======== Structs ========
+    // ==== Structs ====
     public struct SchemaRecord has key, store {
         id: UID,
         incrementing_id: u64,
@@ -51,8 +66,7 @@ module sas::schema {
         approvals: VecSet<TypeName>
     }
   
-    /// === Public Mutative Functions ===
-    
+    // === Public-Mutative Functions ===
     public fun start_attest(self: &SchemaRecord): Request {
         assert!(self.has_resolver(), ENoResolver);  
         new_request(self, START_ATTEST.to_string())
@@ -65,8 +79,7 @@ module sas::schema {
         self.confirm(request);
     }
 
-    /// ======== Public-View Funtions ========
-
+    // === Public-View Functions ===
     public fun start_attest_name(): vector<u8> {
         START_ATTEST
     }
@@ -106,7 +119,7 @@ module sas::schema {
     }
 
     public fun has_resolver(self: &SchemaRecord): bool {
-        self.resolver.is_some()
+        option::is_some(&self.resolver)
     }
 
     public fun schema_address_from_request(request: &Request): address {
@@ -133,8 +146,7 @@ module sas::schema {
         &builder.config
     }
 
-    /// ======== Public Functions ========
-
+    // === Public Functions ===
     public fun new(
         schema_registry: &mut SchemaRegistry, 
         schema: vector<u8>, 
@@ -143,7 +155,7 @@ module sas::schema {
         ): Admin {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.next_id(),
+            incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
@@ -153,7 +165,19 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.registry(object::id_address(&schema_record), ctx);
+        schema_registry.registry(schema_record.addy(), ctx);
+        emit(
+            SchemaCreated {
+                event_type: 0,
+                incrementing_id: schema_record.incrementing_id,
+                schema_address: schema_record.addy(),
+                creator: schema_record.creator,
+                created_at: schema_record.created_at,
+                tx_hash: schema_record.tx_hash,
+                schema: schema_record.schema,
+                revokable: schema_record.revokable
+            }
+        );
 
         let admin_cap = admin::new(schema_record.addy(), ctx);
         transfer::share_object(schema_record);
@@ -169,7 +193,7 @@ module sas::schema {
     ): (ResolverBuilder, Admin) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.next_id(),
+            incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
@@ -179,11 +203,22 @@ module sas::schema {
             resolver: option::none()
         };
 
-        schema_registry.registry(object::id_address(&schema_record), ctx);
+        schema_registry.registry(schema_record.addy(), ctx);
+        emit(
+            SchemaCreated {
+                event_type: 1,
+                incrementing_id: schema_record.incrementing_id,
+                schema_address: schema_record.addy(),
+                creator: schema_record.creator,
+                created_at: schema_record.created_at,
+                tx_hash: schema_record.tx_hash,
+                schema: schema_record.schema,
+                revokable: schema_record.revokable
+            }
+        );
         
         let admin_cap = admin::new(schema_record.addy(), ctx);
-        let schema_address = object::id_address(&schema_record);
-        let resolver_builder = new_resolver_builder(&admin_cap, schema_address, ctx);
+        let resolver_builder = new_resolver_builder(&admin_cap, &schema_record, ctx);
         
         transfer::share_object(schema_record);
         
@@ -191,22 +226,6 @@ module sas::schema {
             resolver_builder,
             admin_cap
         )
-    }
-
-    public fun new_resolver_builder(
-        admin: &Admin,
-        schema_address: address,
-        ctx: &mut TxContext
-    ): ResolverBuilder {
-        admin.assert_schema(schema_address);
-        let mut rules = vec_map::empty();
-        rules.insert(START_ATTEST.to_string(), vec_set::empty());
-
-        ResolverBuilder {
-            schema_address: schema_address,
-            rules: rules,
-            config: bag::new(ctx)
-        }
     }
 
     public fun add_resolver(
@@ -229,13 +248,29 @@ module sas::schema {
         }
     }
 
-    // TODO: Need to add permission verification？
-    public fun update_attestation_cnt(self: &mut SchemaRecord) {
+    // === Admin Functions ===
+    public fun new_resolver_builder(
+        admin: &Admin,
+        schema_record: &SchemaRecord,
+        ctx: &mut TxContext
+    ): ResolverBuilder {
+        admin.assert_schema(schema_record.addy());
+        let mut rules = vec_map::empty();
+        rules.insert(START_ATTEST.to_string(), vec_set::empty());
+
+        ResolverBuilder {
+            schema_address: schema_record.addy(),
+            rules: rules,
+            config: bag::new(ctx)
+        }
+    }
+
+    // === Public-Package Functions ===
+    public(package) fun update_attestation_cnt(self: &mut SchemaRecord) {
         self.attestation_cnt = self.attestation_cnt + 1;
     }
 
-    /// ======== Private Functions ========
-    
+    // === Private Functions ===
     fun confirm(self: &SchemaRecord, request: Request) {
         let resolver = self.resolver.borrow();
         let Request { name, schema_address, approvals } = request;
@@ -254,8 +289,7 @@ module sas::schema {
         }
     }
 
-    /// ======== Witness Functions ========
-    
+    // === Witness Functions ===
     public fun add_rule<Rule: drop>(
         resolver_builder: &mut ResolverBuilder,
         name: String,
