@@ -155,7 +155,7 @@ module sas::schema {
         ): Admin {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.size(),
+            incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
@@ -193,7 +193,7 @@ module sas::schema {
     ): (ResolverBuilder, Admin) {
         let schema_record = SchemaRecord {
             id: object::new(ctx),
-            incrementing_id: schema_registry.size(),
+            incrementing_id: schema_registry.size() + 1,
             attestation_cnt: 0,
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
@@ -218,7 +218,7 @@ module sas::schema {
         );
         
         let admin_cap = admin::new(schema_record.addy(), ctx);
-        let resolver_builder = new_resolver_builder(&admin_cap, schema_record.addy(), ctx);
+        let resolver_builder = new_resolver_builder(&admin_cap, &schema_record, ctx);
         
         transfer::share_object(schema_record);
         
@@ -251,15 +251,15 @@ module sas::schema {
     // === Admin Functions ===
     public fun new_resolver_builder(
         admin: &Admin,
-        schema_address: address,
+        schema_record: &SchemaRecord,
         ctx: &mut TxContext
     ): ResolverBuilder {
-        admin.assert_schema(schema_address);
+        admin.assert_schema(schema_record.addy());
         let mut rules = vec_map::empty();
         rules.insert(START_ATTEST.to_string(), vec_set::empty());
 
         ResolverBuilder {
-            schema_address: schema_address,
+            schema_address: schema_record.addy(),
             rules: rules,
             config: bag::new(ctx)
         }

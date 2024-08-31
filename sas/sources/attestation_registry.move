@@ -79,7 +79,6 @@ module sas::attestation_registry {
         inner
     }
 
-
     // === Public-View Functions ===
     public fun is_exist(self: &AttestationRegistry, attestation: address): bool {
         let self = self.load_inner();
