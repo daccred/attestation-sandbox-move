@@ -5,5 +5,5 @@ Move Attestation Service Contracts
 | Chain | Status |
 |----|----|
 | [Sui](./sas/README.md) | Testnet |
-| Movement | Comming soon |
+| [Movement](./sas/README.md) | Testnet |
 | Aptos | Comming soon |
