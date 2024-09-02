@@ -9,10 +9,12 @@ module sas::sas_tests {
     use sas::schema::{Self, SchemaRecord, ResolverBuilder};
     use sas::schema_registry::{Self, SchemaRegistry};
     use sas::attestation_registry::{Self, AttestationRegistry};
+    use sas::admin::{Admin};
 
     use fun string::utf8 as vector.utf8;
 
     const ENotImplemented: u64 = 0;
+    const EAttestationNotFound: u64 = 1;
 
     public struct Witness has drop {}
 
@@ -27,21 +29,26 @@ module sas::sas_tests {
         let description: vector<u8> = b"Profile of a user";
         let url: vector<u8> = b"https://example.com";
 
+        let attestation_address: address;
+
+        // init
         let mut scenario = test_scenario::begin(admin);
         {
             schema_registry::test_init(test_scenario::ctx(&mut scenario));
             attestation_registry::test_init(test_scenario::ctx(&mut scenario));
         };
 
+        // make schema
         test_scenario::next_tx(&mut scenario, admin);
         {   
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let admin_cap = schema::new(&mut schema_registry, schema, label, false, test_scenario::ctx(&mut scenario));
+            let admin_cap = schema::new(&mut schema_registry, schema, label, true, test_scenario::ctx(&mut scenario));
             
             transfer::public_transfer(admin_cap, admin);
             test_scenario::return_shared<SchemaRegistry>(schema_registry);
         };
         
+        // make attestation
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
@@ -65,15 +72,39 @@ module sas::sas_tests {
             test_scenario::return_shared<SchemaRecord>(schema_record);
             clock::share_for_testing(clock);
         };
-
+        
+        // check attestation is exist
         test_scenario::next_tx(&mut scenario, user);
         {
             let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
             assert!(sas::schema(&attestation) == schema_record.addy());
-
+            attestation_address = object::id_address(&attestation);
+            
             test_scenario::return_shared<SchemaRecord>(schema_record);
             test_scenario::return_to_sender<Attestation>(&scenario, attestation);
+        };
+
+        // revoke attestation
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
+            let mut schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
+            let admin_cap = test_scenario::take_from_sender<Admin>(&scenario);
+            attestation_registry::revoke(&admin_cap, &mut attestation_registry, &mut schema_record, attestation_address, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared<AttestationRegistry>(attestation_registry);
+            test_scenario::return_shared<SchemaRecord>(schema_record);
+            test_scenario::return_to_sender<Admin>(&scenario, admin_cap);
+        };
+
+        // check attestation is revoked
+        test_scenario::next_tx(&mut scenario, user);
+        {
+            let attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
+            assert!(attestation_registry.is_revoked(attestation_address), EAttestationNotFound);
+
+            test_scenario::return_shared<AttestationRegistry>(attestation_registry);
         };
 
         test_scenario::end(scenario);

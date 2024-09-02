@@ -13,6 +13,7 @@ module sas::attestation_registry {
     const EVersionNotEnabled: u64 = 1;
     const EAttestationAlreadyRevoked: u64 = 2;
     const ENotBelongToSchema: u64 = 3;
+    const ENotRevokable: u64 = 4;
 
     // === OTW ===
     public struct ATTESTATION_REGISTRY has drop {}
@@ -80,6 +81,7 @@ module sas::attestation_registry {
         let status = table::borrow_mut(&mut inner.attestations_status, attestation);
         assert!(!status.is_revoked, EAttestationAlreadyRevoked);
         assert!(status.schema_address == schema_record.addy(), ENotBelongToSchema);
+        assert!(schema_record.revokable(), ENotRevokable);
 
         status.is_revoked = true;
         status.timestamp = ctx.epoch_timestamp_ms();
