@@ -6,4 +6,4 @@ Move Attestation Service Contracts
 |----|----|
 | [Sui](./sas/README.md) | Testnet |
 | [Movement](./sas/README.md) | Testnet |
-| Aptos | Comming soon |
+| [Aptos](./aas/README.md) | Testnet |
